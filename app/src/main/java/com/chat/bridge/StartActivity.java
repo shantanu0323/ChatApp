@@ -23,6 +23,7 @@ import android.widget.ImageView;
 public class StartActivity extends AppCompatActivity {
 
     private Button bRegister;
+    private Button bLogin;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,12 +38,21 @@ public class StartActivity extends AppCompatActivity {
         }
 
         bRegister = (Button) findViewById(R.id.bRegister);
+        bLogin = (Button) findViewById(R.id.bLogin);
 
         bRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent registerIntent = new Intent(getApplicationContext(), RegisterActivity.class);
                 startActivity(registerIntent);
+            }
+        });
+
+        bLogin.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent loginIntent = new Intent(getApplicationContext(), LoginActivity.class);
+                startActivity(loginIntent);
             }
         });
 
@@ -59,5 +69,9 @@ public class StartActivity extends AppCompatActivity {
         container.startAnimation(containerAnimation);
     }
 
+    @Override
+    public void onBackPressed() {
+        finish();
+    }
 }
 

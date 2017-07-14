@@ -89,6 +89,12 @@ public class MainActivity extends AppCompatActivity {
                 mAuth.signOut();
                 redirectToStartActivity();
                 break;
+            case R.id.action_account_settings:
+
+                break;
+            case R.id.action_all_users:
+
+                break;
         }
 
         return true;

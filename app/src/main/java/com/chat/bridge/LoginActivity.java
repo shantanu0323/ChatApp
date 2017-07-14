@@ -13,7 +13,6 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -21,53 +20,38 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 
-public class RegisterActivity extends AppCompatActivity implements View.OnClickListener {
+public class LoginActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private static final String TAG = "RegisterActivity";
+    private static final String TAG = "LoginActivity";
+    private TextInputLayout labelPassword;
+    private TextInputLayout labelEmail;
+    private Button bLogin;
+    private ProgressDialog progressDialog;
 
     private FirebaseAuth mAuth;
-
-    private Button bCreateAccount;
-    private TextInputLayout labelEmail;
-    private TextInputLayout labelDisplayName;
-    private TextInputLayout labelPassword;
-    private ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_register);
+        setContentView(R.layout.activity_login);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setIcon(getResources().getDrawable(R.mipmap.ic_app_padded));
 
-        findViews();
-        mAuth = FirebaseAuth.getInstance();
         progressDialog = new ProgressDialog(this);
-    }
+        mAuth = FirebaseAuth.getInstance();
+        findViews();
 
-    private void findViews() {
-        bCreateAccount = (Button) findViewById(R.id.bCreateAccount);
-        labelEmail = (TextInputLayout) findViewById(R.id.labelEmail);
-        labelDisplayName = (TextInputLayout) findViewById(R.id.labelDisplayName);
-        labelPassword = (TextInputLayout) findViewById(R.id.labelPassword);
-
-        bCreateAccount.setOnClickListener(this);
     }
 
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-            case R.id.bCreateAccount:
+            case R.id.bLogin:
                 boolean dataValid = true;
-                String displayName = labelDisplayName.getEditText().getText().toString().trim();
                 String email = labelEmail.getEditText().getText().toString().trim();
                 String password = labelPassword.getEditText().getText().toString().trim();
 
-                if (TextUtils.isEmpty(displayName)) {
-                    labelDisplayName.setError("Mandatory field !!!");
-                    dataValid = false;
-                }
                 if (TextUtils.isEmpty(password)) {
                     labelPassword.setError("Mandatory field !!!");
                     dataValid = false;
@@ -78,37 +62,47 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
                 }
 
                 if (dataValid) {
-                    progressDialog.setIcon(getResources().getDrawable(R.drawable.ic_register));
+                    progressDialog.setIcon(getResources().getDrawable(R.drawable.ic_login));
+                    progressDialog.setMessage("Just a sec... while we prepare your account...");
+                    progressDialog.setTitle("Logging you in...");
                     progressDialog.setCanceledOnTouchOutside(false);
-                    progressDialog.setMessage("Just a sec... while we welcome u to the family...");
-                    progressDialog.setTitle("Registering...");
                     progressDialog.show();
-                    registerUser(displayName, email, password);
+                    loginUser(email, password);
                 }
                 break;
         }
     }
 
-    private void registerUser(String displayName, String email, String password) {
-        mAuth.createUserWithEmailAndPassword(email, password)
+    private void loginUser(String email, String password) {
+        mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
-                        Log.d(TAG, "createUserWithEmail:onComplete:" + task.isSuccessful());
+                        Log.d(TAG, "signInWithEmail:onComplete:" + task.isSuccessful());
                         progressDialog.dismiss();
                         if (task.isSuccessful()) {
-                            Log.d(TAG, "onComplete: Registration Successfull !!!");
+                            Log.d(TAG, "onComplete: Login Successfull !!!");
                             Intent mainIntent = new Intent(getApplicationContext(), MainActivity.class);
+                            mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                             startActivity(mainIntent);
                             finish();
                         } else {
-                            Log.e(TAG, "onComplete: Registration Failed", task.getException());
-//                            Toast.makeText(getApplicationContext(), "Registration Failed : " + task.getException().getMessage(),
+                            Log.w(TAG, "signInWithEmail:failed", task.getException());
+//                            Toast.makeText(getApplicationContext(), "Failed to Sign In : " + task.getException().getMessage(),
 //                                    Toast.LENGTH_LONG).show();
-                            Snackbar.make(getCurrentFocus(), "Failed to Register : " + task.getException().getMessage(), Snackbar.LENGTH_LONG).show();
+                            Snackbar.make(getCurrentFocus(), "Failed to Login : " + task.getException().getMessage(), Snackbar.LENGTH_LONG).show();
                         }
-
                     }
                 });
     }
+
+    private void findViews() {
+        labelPassword = (TextInputLayout) findViewById(R.id.labelPassword);
+        labelEmail = (TextInputLayout) findViewById(R.id.labelEmail);
+        bLogin = (Button) findViewById(R.id.bLogin);
+
+        bLogin.setOnClickListener(this);
+    }
+
+
 }
