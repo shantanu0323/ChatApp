@@ -7,7 +7,9 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.widget.TabLayout;
 import android.support.transition.Fade;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.AttributeSet;
@@ -25,6 +27,10 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
+
+    private ViewPager viewPager;
+    private ViewPagerAdapter viewPagerAdapter;
+    private TabLayout tabLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,7 +58,13 @@ public class MainActivity extends AppCompatActivity {
             }
         };
 
+        viewPager = (ViewPager) findViewById(R.id.mainViewPager);
+        viewPagerAdapter = new ViewPagerAdapter(getSupportFragmentManager());
 
+        viewPager.setAdapter(viewPagerAdapter);
+
+        tabLayout = (TabLayout) findViewById(R.id.mainTabs);
+        tabLayout.setupWithViewPager(viewPager);
     }
 
     private void redirectToStartActivity() {
@@ -90,7 +102,8 @@ public class MainActivity extends AppCompatActivity {
                 redirectToStartActivity();
                 break;
             case R.id.action_account_settings:
-
+                Intent settingsIntent = new Intent(getApplicationContext(), SettingsActivity.class);
+                startActivity(settingsIntent);
                 break;
             case R.id.action_all_users:
 
