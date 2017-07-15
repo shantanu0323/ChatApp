@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/action_view"
+        android:icon="@drawable/ic_photo"
+        android:orderInCategory="100"
+        android:title="View Profile Pic" />
+
+    <item
+        android:id="@+id/action_camera"
+        android:orderInCategory="200"
+        android:icon="@drawable/ic_camera"
+        android:title="Take Picture" />
+    <item
+        android:id="@+id/action_gallery"
+        android:orderInCategory="300"
+        android:icon="@drawable/ic_gallery"
+        android:title="Pick from Gallery" />
+
+</menu>

@@ -7,13 +7,47 @@
     android:background="@drawable/bg_register_background"
     android:isScrollContainer="true"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context="com.chat.bridge.SettingsActivity"
+    tools:context="com.chat.bridge.AccountSettingsActivity"
     tools:showIn="@layout/activity_settings">
+
+    <FrameLayout
+        android:visibility="gone"
+        android:id="@+id/viewProfilePic"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginBottom="0dp"
+        android:layout_marginLeft="0dp"
+        android:layout_marginRight="0dp"
+        android:layout_marginTop="0dp"
+        android:background="#000"
+        android:elevation="10dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/expandedProfilePic"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:src="@drawable/default_image" />
+
+        <ImageButton
+            android:id="@+id/bCancel"
+            android:layout_width="50dp"
+            android:background="@null"
+            android:layout_height="50dp"
+            android:layout_gravity="center_horizontal|bottom"
+            android:layout_marginBottom="20dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_cancel" />
+    </FrameLayout>
 
     <com.mikhaellopez.circularimageview.CircularImageView
         android:id="@+id/profilepic"
         android:layout_width="200dp"
-        android:layout_height="201dp"
+        android:layout_height="202dp"
         android:layout_marginEnd="8dp"
         android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
@@ -85,17 +119,17 @@
         app:layout_constraintRight_toRightOf="parent" />
 
     <android.support.design.widget.FloatingActionButton
+        android:id="@+id/bProfilepic"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:layout_marginRight="8dp"
-        android:id="@+id/bProfilepic"
+        android:layout_marginLeft="16dp"
+        android:layout_marginStart="16dp"
         android:layout_marginTop="8dp"
         android:elevation="6dp"
         android:src="@drawable/ic_edit"
         app:backgroundTint="#dc73fd"
         app:fabSize="mini"
-        app:layout_constraintRight_toRightOf="@+id/profilepic"
+        app:layout_constraintLeft_toLeftOf="@+id/profilepic"
         app:layout_constraintTop_toTopOf="@+id/profilepic"
         app:rippleColor="#fff" />
 

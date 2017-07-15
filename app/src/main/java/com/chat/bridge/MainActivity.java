@@ -1,23 +1,15 @@
 package com.chat.bridge;
 
-import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
-import android.support.transition.Fade;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.FrameLayout;
-import android.widget.ImageView;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -86,6 +78,7 @@ public class MainActivity extends AppCompatActivity {
             mAuth.removeAuthStateListener(mAuthListener);
         }
     }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
@@ -102,8 +95,9 @@ public class MainActivity extends AppCompatActivity {
                 redirectToStartActivity();
                 break;
             case R.id.action_account_settings:
-                Intent settingsIntent = new Intent(getApplicationContext(), SettingsActivity.class);
+                Intent settingsIntent = new Intent(getApplicationContext(), AccountSettingsActivity.class);
                 startActivity(settingsIntent);
+                finish();
                 break;
             case R.id.action_all_users:
 

@@ -20,6 +20,10 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
+import java.util.HashMap;
 
 public class RegisterActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -32,6 +36,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
     private TextInputLayout labelDisplayName;
     private TextInputLayout labelPassword;
     private ProgressDialog progressDialog;
+    private DatabaseReference userDatabase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,20 +94,35 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
         }
     }
 
-    private void registerUser(String displayName, String email, String password) {
+    private void registerUser(final String displayName, final String email, String password) {
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         Log.d(TAG, "createUserWithEmail:onComplete:" + task.isSuccessful());
-                        progressDialog.dismiss();
                         if (task.isSuccessful()) {
                             Log.d(TAG, "onComplete: Registration Successfull !!!");
+
+                            String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+                            userDatabase = FirebaseDatabase.getInstance().getReference().child("Users").child(userId);
+
+                            HashMap<String, String> userMap = new HashMap<String, String>();
+                            userMap.put("name", displayName);
+                            userMap.put("status", "Hey there! Im using this cool application for chatting purposes");
+                            userMap.put("email", email);
+                            userMap.put("image", "default");
+                            userMap.put("thumbnail", "default");
+
+                            userDatabase.setValue(userMap);
+
                             Intent mainIntent = new Intent(getApplicationContext(), MainActivity.class);
+                            progressDialog.dismiss();
                             startActivity(mainIntent);
                             finish();
                         } else {
                             Log.e(TAG, "onComplete: Registration Failed", task.getException());
+                            progressDialog.dismiss();
 //                            Toast.makeText(getApplicationContext(), "Registration Failed : " + task.getException().getMessage(),
 //                                    Toast.LENGTH_LONG).show();
                             Snackbar.make(getCurrentFocus(), "Failed to Register : " + task.getException().getMessage(), Snackbar.LENGTH_LONG).show();
