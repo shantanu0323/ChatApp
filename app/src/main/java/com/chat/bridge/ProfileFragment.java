@@ -26,6 +26,8 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Picasso;
 
+import java.text.DateFormat;
+import java.util.Date;
 import java.util.HashMap;
 
 
@@ -43,6 +45,7 @@ public class ProfileFragment extends Fragment implements View.OnClickListener {
     private static String SENT;
     private static Drawable BG_SEND;
     private static Drawable BG_CANCEL;
+    private static Drawable BG_UNFRIEND;
     private static Drawable BG_ACCEPT;
 
 
@@ -59,6 +62,8 @@ public class ProfileFragment extends Fragment implements View.OnClickListener {
 
     private DatabaseReference userDatabase;
     private DatabaseReference friendRequests;
+    private DatabaseReference friends;
+
     private String currentUserId;
     private int friendshipStatus;
 
@@ -88,10 +93,11 @@ public class ProfileFragment extends Fragment implements View.OnClickListener {
         userDatabase = FirebaseDatabase.getInstance().getReference().child("Users")
                 .child(currentUserId);
         friendRequests = FirebaseDatabase.getInstance().getReference().child("FriendRequests");
+        friends = FirebaseDatabase.getInstance().getReference().child("Friends");
 
         findViews(root);
         initConstants();
-        friendshipStatus = NOT_FRIENDS;
+//        friendshipStatus = NOT_FRIENDS;
         populateViews(userId);
         return root;
     }
@@ -100,8 +106,9 @@ public class ProfileFragment extends Fragment implements View.OnClickListener {
         SENT = getString((R.string.sent));
         RECEIVED = getString(R.string.received);
         BG_CANCEL = getResources().getDrawable(R.drawable.bg_cancel_request);
+        BG_UNFRIEND = BG_CANCEL;
         BG_SEND = getResources().getDrawable(R.drawable.bg_send_request);
-        BG_ACCEPT= getResources().getDrawable(R.drawable.bg_accept_request);
+        BG_ACCEPT = getResources().getDrawable(R.drawable.bg_accept_request);
     }
 
     private void populateViews(final String userId) {
@@ -128,6 +135,10 @@ public class ProfileFragment extends Fragment implements View.OnClickListener {
                 Snackbar.make(getActivity().getCurrentFocus(), "Sorry!!! I could not load your profile right now... :\n" + databaseError.getMessage(), Snackbar.LENGTH_LONG).show();
             }
         });
+        if (currentUserId.equals(userId)) {
+            updateAction(R.string.own_profile);
+            return;
+        }
         friendRequests.child(currentUserId).child(userId)
                 .addValueEventListener(new ValueEventListener() {
                     @Override
@@ -136,13 +147,38 @@ public class ProfileFragment extends Fragment implements View.OnClickListener {
                             String requestType = dataSnapshot.child("requestType").getValue().toString();
                             Log.i(TAG, "onDataChange: requestType : " + requestType);
                             if (requestType.equals(SENT)) {
+                                friendshipStatus = REQUEST_SENT;
                                 updateAction(R.string.cancel);
                             } else if (requestType.equals(RECEIVED)) {
+                                friendshipStatus = REQUEST_RECEIVED;
                                 updateAction(R.string.accept);
                             }
                         } else {
-                            // Request not sent yet
-                            updateAction(R.string.sent);
+                            // Request not sent yet or cancelled or accepted
+                            if (friendshipStatus == NOT_FRIENDS) {
+                                updateAction(R.string.sent);
+                            } else if (friendshipStatus == FRIENDS) {
+                                updateAction(R.string.accepted);
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
+        friends.child(currentUserId)
+                .addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        if (dataSnapshot.hasChild(userId)) {
+                            // FRIENDS
+                            friendshipStatus = FRIENDS;
+                            updateAction(R.string.accepted);
+                        } else {
+                            // NOT_FRIENDS
+
                         }
                     }
 
@@ -159,18 +195,33 @@ public class ProfileFragment extends Fragment implements View.OnClickListener {
                 bDeclineRequest.setVisibility(View.GONE);
                 bAction.setBackground(BG_CANCEL);
                 bAction.setText("Cancel Request");
+                bAction.setVisibility(View.VISIBLE);
                 actionContainer.setVisibility(View.VISIBLE);
                 break;
             case R.string.sent:
                 bDeclineRequest.setVisibility(View.GONE);
                 bAction.setBackground(BG_SEND);
                 bAction.setText("Send Request");
+                bAction.setVisibility(View.VISIBLE);
                 actionContainer.setVisibility(View.VISIBLE);
                 break;
             case R.string.accept:
                 bDeclineRequest.setVisibility(View.VISIBLE);
                 bAction.setBackground(BG_ACCEPT);
                 bAction.setText("Accept Request");
+                bAction.setVisibility(View.VISIBLE);
+                actionContainer.setVisibility(View.VISIBLE);
+                break;
+            case R.string.accepted:
+                bDeclineRequest.setVisibility(View.GONE);
+                bAction.setBackground(BG_UNFRIEND);
+                bAction.setText("UnFriend");
+                bAction.setVisibility(View.VISIBLE);
+                actionContainer.setVisibility(View.VISIBLE);
+                break;
+            case R.string.own_profile:
+                bAction.setVisibility(View.GONE);
+                bDeclineRequest.setVisibility(View.GONE);
                 actionContainer.setVisibility(View.VISIBLE);
                 break;
         }
@@ -197,7 +248,7 @@ public class ProfileFragment extends Fragment implements View.OnClickListener {
         switch (v.getId()) {
             case R.id.bAction:
                 if (friendshipStatus == NOT_FRIENDS) {
-
+                    Log.d(TAG, "onClick: NOT_FRIENDS");
                     friendRequests.child(currentUserId).child(userId).child("requestType").setValue(SENT)
                             .addOnSuccessListener(new OnSuccessListener<Void>() {
                                 @Override
@@ -216,6 +267,7 @@ public class ProfileFragment extends Fragment implements View.OnClickListener {
                             });
 
                 } else if (friendshipStatus == REQUEST_SENT) {
+                    Log.d(TAG, "onClick: REQUEST_SENT");
                     friendRequests.child(currentUserId).child(userId).child("requestType").removeValue()
                             .addOnSuccessListener(new OnSuccessListener<Void>() {
                                 @Override
@@ -233,14 +285,45 @@ public class ProfileFragment extends Fragment implements View.OnClickListener {
                                 }
                             });
                 } else if (friendshipStatus == REQUEST_RECEIVED) {
-                    friendshipStatus = FRIENDS;
+                    Log.d(TAG, "onClick: REQUEST_RECEIVED");
+                    final String date = DateFormat.getDateTimeInstance().format(new Date());
+                    friends.child(currentUserId).child(userId).setValue(date).addOnSuccessListener(new OnSuccessListener<Void>() {
+                        @Override
+                        public void onSuccess(Void aVoid) {
+                            friends.child(userId).child(currentUserId).setValue(date).addOnSuccessListener(new OnSuccessListener<Void>() {
+                                @Override
+                                public void onSuccess(Void aVoid) {
+                                    friendRequests.child(currentUserId).child(userId).child("requestType").removeValue();
+                                    friendRequests.child(userId).child(currentUserId).child("requestType").removeValue();
+                                    friendshipStatus = FRIENDS;
+                                    updateAction(R.string.accepted);
+                                    Toast.makeText(getActivity(), "You are now friends with " + tvDisplayName.getText().toString()
+                                            + "!!!", Toast.LENGTH_SHORT).show();
+                                    bAction.setEnabled(true);
+                                }
+                            });
+                        }
+                    });
 
                 } else if (friendshipStatus == FRIENDS) {
                     // Unfriend the friend
+                    Log.d(TAG, "onClick: FRIENDS");
+                    friends.child(currentUserId).child(userId).removeValue();
+                    friends.child(userId).child(currentUserId).removeValue();
+                    friendshipStatus = NOT_FRIENDS;
+                    Toast.makeText(getActivity(), "You are no more friends with "
+                            + tvDisplayName.getText().toString() + "!!!", Toast.LENGTH_SHORT).show();
+                    updateAction(R.string.sent);
+                    bAction.setEnabled(true);
                 }
                 break;
             case R.id.bDeclineRequest:
-
+                friendRequests.child(currentUserId).child(userId).child("requestType").removeValue();
+                friendRequests.child(userId).child(currentUserId).child("requestType").removeValue();
+                friendshipStatus = NOT_FRIENDS;
+                updateAction(R.string.sent);
+                Toast.makeText(getActivity(), "Friend Request Declined !!!", Toast.LENGTH_SHORT).show();
+                bAction.setEnabled(true);
                 break;
         }
     }

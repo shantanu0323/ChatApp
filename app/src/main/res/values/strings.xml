@@ -23,4 +23,6 @@
     <string name="received">received</string>
     <string name="sent">sent</string>
     <string name="accept">accept</string>
+    <string name="accepted">accepted</string>
+    <string name="own_profile">own_profile</string>
 </resources>
