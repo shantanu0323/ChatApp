@@ -43,11 +43,14 @@
         <activity
             android:name=".EditActivity"
             android:label="@string/title_activity_edit"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name="com.theartofdev.edmodo.cropper.CropImageActivity"
             android:theme="@style/Base.Theme.AppCompat" />
-
+        <activity
+            android:name=".UsersActivity"
+            android:label="@string/title_activity_users"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 
 </manifest>

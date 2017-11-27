@@ -89,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
-        switch (id){
+        switch (id) {
             case R.id.action_logout:
                 mAuth.signOut();
                 redirectToStartActivity();
@@ -97,10 +97,10 @@ public class MainActivity extends AppCompatActivity {
             case R.id.action_account_settings:
                 Intent settingsIntent = new Intent(getApplicationContext(), AccountSettingsActivity.class);
                 startActivity(settingsIntent);
-                finish();
                 break;
             case R.id.action_all_users:
-
+                Intent allUserIntent = new Intent(getApplicationContext(), UsersActivity.class);
+                startActivity(allUserIntent);
                 break;
         }
 

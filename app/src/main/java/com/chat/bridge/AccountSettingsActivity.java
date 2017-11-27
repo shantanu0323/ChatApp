@@ -50,7 +50,10 @@ import com.theartofdev.edmodo.cropper.CropImageView;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
+
+import id.zelory.compressor.Compressor;
 
 public class AccountSettingsActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -121,7 +124,7 @@ public class AccountSettingsActivity extends AppCompatActivity implements View.O
                     tvEmail.setText(currentUser.get("email"));
                     String imageUrl = currentUser.get("image");
                     if (!imageUrl.equalsIgnoreCase("default")) {
-                        Picasso.with(AccountSettingsActivity.this).load(imageUrl).into(profilepic);
+                        Picasso.with(AccountSettingsActivity.this).load(imageUrl).placeholder(R.drawable.default_image).into(profilepic);
                     }
                 }
                 progressDialog.dismiss();
@@ -265,20 +268,47 @@ public class AccountSettingsActivity extends AppCompatActivity implements View.O
         progressDialog.setTitle("Uploading...");
         progressDialog.show();
 
+        File thumbnailPath = new File(uri.getPath());
+        Bitmap thumbnailBitmap = null;
+        try {
+            thumbnailBitmap = new Compressor(this)
+                    .setMaxHeight(200)
+                    .setMaxWidth(200)
+                    .setQuality(75)
+                    .compressToBitmap(thumbnailPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        ByteArrayOutputStream bAOS = new ByteArrayOutputStream();
+        thumbnailBitmap.compress(Bitmap.CompressFormat.JPEG, 100, bAOS);
+        final byte[] thumbnailByte = bAOS.toByteArray();
+
         StorageReference profilepicStorage = mStorageRef.child(FirebaseAuth.getInstance().getCurrentUser().getUid().toString());
+        final StorageReference thumbnailStorage = mStorageRef.child("thumbnails").child(FirebaseAuth.getInstance().getCurrentUser().getUid().toString());
+
         profilepicStorage.putFile(uri)
                 .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                     @Override
                     public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                         // Get a URL to the uploaded content
-                        Uri downloadUrl = taskSnapshot.getDownloadUrl();
-                        DatabaseReference userDatabase = FirebaseDatabase.getInstance().getReference().child("Users")
-                                .child(FirebaseAuth.getInstance().getCurrentUser().getUid().toString());
-                        userDatabase.child("image").setValue(downloadUrl.toString());
-                        userDatabase.child("thumbnail").setValue(downloadUrl.toString());
-                        profilepic.setImageURI(uri);
-                        expandedProfilePic.setImageURI(uri);
-                        progressDialog.dismiss();
+                        final Uri downloadUrl = taskSnapshot.getDownloadUrl();
+
+                        UploadTask uploadTask = thumbnailStorage.putBytes(thumbnailByte);
+                        uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                            @Override
+                            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                                Uri downloadThumbnailUrl = taskSnapshot.getDownloadUrl();
+                                DatabaseReference userDatabase = FirebaseDatabase.getInstance().getReference().child("Users")
+                                        .child(FirebaseAuth.getInstance().getCurrentUser().getUid().toString());
+                                userDatabase.child("image").setValue(downloadUrl.toString());
+                                userDatabase.child("thumbnail").setValue(downloadThumbnailUrl.toString());
+                                profilepic.setImageURI(uri);
+                                expandedProfilePic.setImageURI(uri);
+                                progressDialog.dismiss();
+
+
+                            }
+                        });
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
@@ -286,7 +316,7 @@ public class AccountSettingsActivity extends AppCompatActivity implements View.O
                     public void onFailure(@NonNull Exception exception) {
                         // Handle unsuccessful uploads
                         progressDialog.dismiss();
-                        Snackbar.make(getCurrentFocus(), "Uploading failed : "+ exception.getMessage(), Snackbar.LENGTH_LONG).show();
+                        Snackbar.make(getCurrentFocus(), "Uploading failed : " + exception.getMessage(), Snackbar.LENGTH_LONG).show();
                     }
                 });
     }
