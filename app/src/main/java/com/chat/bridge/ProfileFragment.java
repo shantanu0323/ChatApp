@@ -137,56 +137,57 @@ public class ProfileFragment extends Fragment implements View.OnClickListener {
         });
         if (currentUserId.equals(userId)) {
             updateAction(R.string.own_profile);
-            return;
-        }
-        friendRequests.child(currentUserId).child(userId)
-                .addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        if (dataSnapshot.hasChild("requestType")) {
-                            String requestType = dataSnapshot.child("requestType").getValue().toString();
-                            Log.i(TAG, "onDataChange: requestType : " + requestType);
-                            if (requestType.equals(SENT)) {
-                                friendshipStatus = REQUEST_SENT;
-                                updateAction(R.string.cancel);
-                            } else if (requestType.equals(RECEIVED)) {
-                                friendshipStatus = REQUEST_RECEIVED;
-                                updateAction(R.string.accept);
+
+        } else {
+            friendRequests.child(currentUserId).child(userId)
+                    .addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            if (dataSnapshot.hasChild("requestType")) {
+                                String requestType = dataSnapshot.child("requestType").getValue().toString();
+                                Log.i(TAG, "onDataChange: requestType : " + requestType);
+                                if (requestType.equals(SENT)) {
+                                    friendshipStatus = REQUEST_SENT;
+                                    updateAction(R.string.cancel);
+                                } else if (requestType.equals(RECEIVED)) {
+                                    friendshipStatus = REQUEST_RECEIVED;
+                                    updateAction(R.string.accept);
+                                }
+                            } else {
+                                // Request not sent yet or cancelled or accepted
+                                if (friendshipStatus == NOT_FRIENDS) {
+                                    updateAction(R.string.sent);
+                                } else if (friendshipStatus == FRIENDS) {
+                                    updateAction(R.string.accepted);
+                                }
                             }
-                        } else {
-                            // Request not sent yet or cancelled or accepted
-                            if (friendshipStatus == NOT_FRIENDS) {
-                                updateAction(R.string.sent);
-                            } else if (friendshipStatus == FRIENDS) {
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+
+                        }
+                    });
+            friends.child(currentUserId)
+                    .addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            if (dataSnapshot.hasChild(userId)) {
+                                // FRIENDS
+                                friendshipStatus = FRIENDS;
                                 updateAction(R.string.accepted);
+                            } else {
+                                // NOT_FRIENDS
+
                             }
                         }
-                    }
 
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-
-                    }
-                });
-        friends.child(currentUserId)
-                .addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        if (dataSnapshot.hasChild(userId)) {
-                            // FRIENDS
-                            friendshipStatus = FRIENDS;
-                            updateAction(R.string.accepted);
-                        } else {
-                            // NOT_FRIENDS
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
 
                         }
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-
-                    }
-                });
+                    });
+        }
     }
 
     private void updateAction(int action) {

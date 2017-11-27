@@ -44,6 +44,8 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.mikhaellopez.circularimageview.CircularImageView;
+import com.squareup.picasso.Callback;
+import com.squareup.picasso.NetworkPolicy;
 import com.squareup.picasso.Picasso;
 import com.theartofdev.edmodo.cropper.CropImage;
 import com.theartofdev.edmodo.cropper.CropImageView;
@@ -114,6 +116,7 @@ public class AccountSettingsActivity extends AppCompatActivity implements View.O
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
         final String userId = mAuth.getCurrentUser().getUid();
         DatabaseReference userDatabase = FirebaseDatabase.getInstance().getReference().child("Users");
+        userDatabase.keepSynced(true);
         userDatabase.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -122,9 +125,21 @@ public class AccountSettingsActivity extends AppCompatActivity implements View.O
                     etDisplayName.setText(currentUser.get("name"));
                     etStatus.setText(currentUser.get("status"));
                     tvEmail.setText(currentUser.get("email"));
-                    String imageUrl = currentUser.get("image");
+                    final String imageUrl = currentUser.get("image");
                     if (!imageUrl.equalsIgnoreCase("default")) {
-                        Picasso.with(AccountSettingsActivity.this).load(imageUrl).placeholder(R.drawable.default_image).into(profilepic);
+                        Picasso.with(AccountSettingsActivity.this).load(imageUrl).networkPolicy(NetworkPolicy.OFFLINE)
+                                .placeholder(R.drawable.default_image).into(profilepic, new Callback() {
+                            @Override
+                            public void onSuccess() {
+                                // Image loaded offline successfully
+                            }
+
+                            @Override
+                            public void onError() {
+                                Picasso.with(AccountSettingsActivity.this).load(imageUrl).networkPolicy(NetworkPolicy.OFFLINE)
+                                        .placeholder(R.drawable.default_image).into(profilepic);
+                            }
+                        });
                     }
                 }
                 progressDialog.dismiss();
