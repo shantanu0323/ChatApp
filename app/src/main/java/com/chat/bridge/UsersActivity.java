@@ -6,6 +6,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.widget.FrameLayout;
 
@@ -20,6 +21,8 @@ public class UsersActivity extends AppCompatActivity {
     private FrameLayout profileContainer;
     private ProfileFragment profileFragment;
 
+    private static final String TAG = "UsersActivity";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,6 +36,18 @@ public class UsersActivity extends AppCompatActivity {
         usersList = (RecyclerView) findViewById(R.id.usersList);
         usersList.setHasFixedSize(true);
         usersList.setLayoutManager(new LinearLayoutManager(this));
+
+        String userIdFromIntent = null;
+        userIdFromIntent = getIntent().getStringExtra("userId");
+        Log.e(TAG, "onCreate: fromUserId = " + userIdFromIntent);
+        if (userIdFromIntent != null) {
+            profileFragment = ProfileFragment.newInstance(userIdFromIntent);
+
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.profileFragment, profileFragment)
+                    .commit();
+            profileContainer.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
@@ -54,7 +69,7 @@ public class UsersActivity extends AppCompatActivity {
                 viewHolder.view.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        profileFragment  =ProfileFragment.newInstance(getRef(position).getKey());
+                        profileFragment = ProfileFragment.newInstance(getRef(position).getKey());
 
                         getSupportFragmentManager().beginTransaction()
                                 .replace(R.id.profileFragment, profileFragment)

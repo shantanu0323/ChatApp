@@ -16,9 +16,13 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.iid.FirebaseInstanceId;
 
 public class LoginActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -29,6 +33,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     private ProgressDialog progressDialog;
 
     private FirebaseAuth mAuth;
+    private DatabaseReference mUsers;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +45,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
         progressDialog = new ProgressDialog(this);
         mAuth = FirebaseAuth.getInstance();
+        mUsers = FirebaseDatabase.getInstance().getReference().child("Users");
         findViews();
 
     }
@@ -82,10 +88,21 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                         progressDialog.dismiss();
                         if (task.isSuccessful()) {
                             Log.d(TAG, "onComplete: Login Successfull !!!");
-                            Intent mainIntent = new Intent(getApplicationContext(), MainActivity.class);
-                            mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-                            startActivity(mainIntent);
-                            finish();
+
+                            String deviceToken = FirebaseInstanceId.getInstance().getToken();
+                            String currentUserId = mAuth.getCurrentUser().getUid();
+
+                            mUsers.child(currentUserId).child("deviceToken").setValue(deviceToken)
+                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                        @Override
+                                        public void onSuccess(Void aVoid) {
+                                            Intent mainIntent = new Intent(getApplicationContext(), MainActivity.class);
+                                            mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                                            startActivity(mainIntent);
+                                            finish();
+                                        }
+                                    });
+
                         } else {
                             Log.w(TAG, "signInWithEmail:failed", task.getException());
 //                            Toast.makeText(getApplicationContext(), "Failed to Sign In : " + task.getException().getMessage(),

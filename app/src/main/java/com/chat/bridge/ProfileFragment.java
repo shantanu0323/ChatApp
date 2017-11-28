@@ -63,6 +63,7 @@ public class ProfileFragment extends Fragment implements View.OnClickListener {
     private DatabaseReference userDatabase;
     private DatabaseReference friendRequests;
     private DatabaseReference friends;
+    private DatabaseReference notifications;
 
     private String currentUserId;
     private int friendshipStatus;
@@ -94,6 +95,7 @@ public class ProfileFragment extends Fragment implements View.OnClickListener {
                 .child(currentUserId);
         friendRequests = FirebaseDatabase.getInstance().getReference().child("FriendRequests");
         friends = FirebaseDatabase.getInstance().getReference().child("Friends");
+        notifications = FirebaseDatabase.getInstance().getReference().child("Notifications");
 
         findViews(root);
         initConstants();
@@ -259,9 +261,20 @@ public class ProfileFragment extends Fragment implements View.OnClickListener {
                                                 @Override
                                                 public void onSuccess(Void aVoid) {
                                                     bAction.setEnabled(true);
-                                                    Toast.makeText(getActivity(), "Request Sent Successfully!!!", Toast.LENGTH_SHORT).show();
-                                                    friendshipStatus = REQUEST_SENT;
-                                                    updateAction(R.string.cancel);
+
+                                                    HashMap<String, String> notificationData = new HashMap<>();
+                                                    notificationData.put("from",currentUserId);
+                                                    notificationData.put("type", "request");
+                                                    notifications.child(userId).push().setValue(notificationData)
+                                                            .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                                @Override
+                                                                public void onSuccess(Void aVoid) {
+                                                                    Toast.makeText(getActivity(), "Request Sent Successfully!!!", Toast.LENGTH_SHORT).show();
+                                                                    friendshipStatus = REQUEST_SENT;
+                                                                    updateAction(R.string.cancel);
+                                                                }
+                                                            });
+
                                                 }
                                             });
                                 }
