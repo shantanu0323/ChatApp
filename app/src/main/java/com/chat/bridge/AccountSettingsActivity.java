@@ -74,6 +74,8 @@ public class AccountSettingsActivity extends AppCompatActivity implements View.O
     private ImageView expandedProfilePic;
     private Uri uri = null;
     private StorageReference mStorageRef;
+    private DatabaseReference currentUserRef;
+    private FirebaseAuth mAuth;
 
     private void findViews() {
         profilepic = (CircularImageView) findViewById(R.id.profilepic);
@@ -102,6 +104,9 @@ public class AccountSettingsActivity extends AppCompatActivity implements View.O
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
         }
 
+        mAuth = FirebaseAuth.getInstance();
+        currentUserRef = FirebaseDatabase.getInstance().getReference().child("Users")
+                .child(mAuth.getCurrentUser().getUid());
         findViews();
         progressDialog.setIcon(getResources().getDrawable(R.drawable.ic_display_name));
         progressDialog.setCanceledOnTouchOutside(false);
@@ -343,5 +348,29 @@ public class AccountSettingsActivity extends AppCompatActivity implements View.O
         } else {
             viewProfilePic.setVisibility(View.GONE);
         }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        currentUserRef.child("online").setValue("true");
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        currentUserRef.child("online").setValue("true");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        currentUserRef.child("online").setValue("true");
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        currentUserRef.child("online").setValue("false");
     }
 }

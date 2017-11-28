@@ -13,6 +13,8 @@ import android.view.MenuItem;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -23,6 +25,8 @@ public class MainActivity extends AppCompatActivity {
     private ViewPager viewPager;
     private ViewPagerAdapter viewPagerAdapter;
     private TabLayout tabLayout;
+
+    private DatabaseReference currentUserRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
                 if (user != null) {
                     // User is signed in
                     Log.d(TAG, "onAuthStateChanged:signed_in:" + user.getUid());
+                    currentUserRef.child("online").setValue("true");
                 } else {
                     // User is signed out
                     Log.d(TAG, "onAuthStateChanged:signed_out");
@@ -49,6 +54,9 @@ public class MainActivity extends AppCompatActivity {
                 // ...
             }
         };
+
+        currentUserRef = FirebaseDatabase.getInstance().getReference().child("Users")
+                .child(mAuth.getCurrentUser().getUid());
 
         viewPager = (ViewPager) findViewById(R.id.mainViewPager);
         viewPagerAdapter = new ViewPagerAdapter(getSupportFragmentManager());
@@ -75,6 +83,7 @@ public class MainActivity extends AppCompatActivity {
     public void onStop() {
         super.onStop();
         if (mAuthListener != null) {
+            currentUserRef.child("online").setValue("false");
             mAuth.removeAuthStateListener(mAuthListener);
         }
     }
@@ -105,6 +114,18 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return true;
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        currentUserRef.child("online").setValue("true");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        currentUserRef.child("online").setValue("true");
     }
 
 }

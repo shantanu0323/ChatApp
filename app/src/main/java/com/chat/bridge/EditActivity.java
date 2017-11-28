@@ -28,6 +28,8 @@ public class EditActivity extends AppCompatActivity {
     private TextInputLayout labelStatus;
     private FloatingActionButton save;
     private ProgressDialog progressDialog;
+    private DatabaseReference currentUserRef;
+    private FirebaseAuth mAuth;
 
     private void findViews() {
         labelDisplayName = (TextInputLayout) findViewById(R.id.labelDisplayName);
@@ -46,6 +48,10 @@ public class EditActivity extends AppCompatActivity {
         findViews();
         labelDisplayName.getEditText().setText(getIntent().getStringExtra("name"));
         labelStatus.getEditText().setText(getIntent().getStringExtra("status"));
+
+        mAuth = FirebaseAuth.getInstance();
+        currentUserRef = FirebaseDatabase.getInstance().getReference().child("Users")
+                .child(mAuth.getCurrentUser().getUid());
 
         save.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -139,6 +145,30 @@ public class EditActivity extends AppCompatActivity {
         }
 
         return true;
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        currentUserRef.child("online").setValue("true");
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        currentUserRef.child("online").setValue("true");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        currentUserRef.child("online").setValue("true");
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        currentUserRef.child("online").setValue("false");
     }
 
 }

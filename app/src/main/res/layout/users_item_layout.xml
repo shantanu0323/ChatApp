@@ -20,6 +20,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginLeft="10dp"
+        android:layout_weight="1"
         android:orientation="vertical">
 
         <TextView
@@ -36,5 +37,18 @@
             android:layout_height="wrap_content"
             android:text="This is the status"
             android:textSize="13sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_gravity="right">
+        <ImageView
+            android:id="@+id/userOnlineIcon"
+            android:visibility="invisible"
+            android:padding="15dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@mipmap/ic_online"/>
     </LinearLayout>
 </LinearLayout>

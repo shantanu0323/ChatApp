@@ -11,6 +11,7 @@ import android.view.View;
 import android.widget.FrameLayout;
 
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -20,6 +21,8 @@ public class UsersActivity extends AppCompatActivity {
     private DatabaseReference usersDatabase;
     private FrameLayout profileContainer;
     private ProfileFragment profileFragment;
+    private DatabaseReference currentUserRef;
+    private FirebaseAuth mAuth;
 
     private static final String TAG = "UsersActivity";
 
@@ -31,6 +34,9 @@ public class UsersActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         usersDatabase = FirebaseDatabase.getInstance().getReference().child("Users");
+        mAuth = FirebaseAuth.getInstance();
+        currentUserRef = FirebaseDatabase.getInstance().getReference().child("Users")
+                .child(mAuth.getCurrentUser().getUid());
 
         profileContainer = (FrameLayout) findViewById(R.id.profileContainer);
         usersList = (RecyclerView) findViewById(R.id.usersList);
@@ -54,6 +60,7 @@ public class UsersActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
 
+        currentUserRef.child("online").setValue("true");
         FirebaseRecyclerAdapter<Users, UsersViewHolder> usersAdapter = new FirebaseRecyclerAdapter<Users, UsersViewHolder>(
                 Users.class,
                 R.layout.users_item_layout,
@@ -90,6 +97,24 @@ public class UsersActivity extends AppCompatActivity {
         } else {
             super.onBackPressed();
         }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        currentUserRef.child("online").setValue("false");
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        currentUserRef.child("online").setValue("true");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        currentUserRef.child("online").setValue("true");
     }
 
     public static UsersActivity defaultInstance() {
