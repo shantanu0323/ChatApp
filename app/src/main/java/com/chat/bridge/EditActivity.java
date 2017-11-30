@@ -166,8 +166,8 @@ public class EditActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
+    protected void onPause() {
+        super.onPause();
         currentUserRef.child("online").setValue("false");
     }
 

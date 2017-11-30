@@ -55,8 +55,12 @@ public class MainActivity extends AppCompatActivity {
             }
         };
 
-        currentUserRef = FirebaseDatabase.getInstance().getReference().child("Users")
-                .child(mAuth.getCurrentUser().getUid());
+        try {
+            currentUserRef = FirebaseDatabase.getInstance().getReference().child("Users")
+                    .child(mAuth.getCurrentUser().getUid());
+        } catch (Exception e) {
+            Log.e(TAG, "onCreate: NO USER LOGGED IN : ", e);
+        }
 
         viewPager = (ViewPager) findViewById(R.id.mainViewPager);
         viewPagerAdapter = new ViewPagerAdapter(getSupportFragmentManager());
@@ -76,14 +80,20 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onStart() {
         super.onStart();
+        Log.i(TAG, "onStart: CALLED");
+        try {
+            currentUserRef.child("online").setValue("true");
+        } catch (Exception e) {
+            Log.e(TAG, "onStart: NO USER LOGGED IN : " + e.getMessage());
+        }
         mAuth.addAuthStateListener(mAuthListener);
     }
 
     @Override
     public void onStop() {
         super.onStop();
+        Log.i(TAG, "onStop: CALLED");
         if (mAuthListener != null) {
-            currentUserRef.child("online").setValue("false");
             mAuth.removeAuthStateListener(mAuthListener);
         }
     }
@@ -119,13 +129,29 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onRestart() {
         super.onRestart();
-        currentUserRef.child("online").setValue("true");
+        Log.i(TAG, "onRestart: CALLED");
+        try {
+            currentUserRef.child("online").setValue("true");
+        } catch (Exception e) {
+            Log.e(TAG, "onCreate: NO USER LOGGED IN : ", e);
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        currentUserRef.child("online").setValue("true");
+        Log.i(TAG, "onResume: CALLED");
+        try {
+            currentUserRef.child("online").setValue("true");
+        } catch (Exception e) {
+            Log.e(TAG, "onCreate: NO USER LOGGED IN : ", e);
+        }
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.i(TAG, "onPause: CALLED");
+        currentUserRef.child("online").setValue("false");
+    }
 }

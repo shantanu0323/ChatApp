@@ -59,7 +59,7 @@ public class UsersActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-
+        Log.i(TAG, "onStart: CALLED");
         currentUserRef.child("online").setValue("true");
         FirebaseRecyclerAdapter<Users, UsersViewHolder> usersAdapter = new FirebaseRecyclerAdapter<Users, UsersViewHolder>(
                 Users.class,
@@ -100,20 +100,23 @@ public class UsersActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
+    protected void onPause() {
+        super.onPause();
+        Log.i(TAG, "onPause: CALLED");
         currentUserRef.child("online").setValue("false");
     }
 
     @Override
     protected void onRestart() {
         super.onRestart();
+        Log.i(TAG, "onRestart: CALLED");
         currentUserRef.child("online").setValue("true");
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        Log.i(TAG, "onResume: CALLED");
         currentUserRef.child("online").setValue("true");
     }
 

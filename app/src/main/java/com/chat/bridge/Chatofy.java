@@ -1,6 +1,7 @@
 package com.chat.bridge;
 
 import android.app.Application;
+import android.util.Log;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -16,6 +17,8 @@ import com.squareup.picasso.Picasso;
  */
 
 public class Chatofy extends Application {
+
+    private static final String TAG = "Chatofy";
 
     private DatabaseReference usersDatabase;
     private FirebaseAuth mAuth;
@@ -36,21 +39,24 @@ public class Chatofy extends Application {
         FirebaseDatabase.getInstance().setPersistenceEnabled(true);
 
         mAuth = FirebaseAuth.getInstance();
-        usersDatabase = FirebaseDatabase.getInstance().getReference().child("Users")
-                .child(mAuth.getCurrentUser().getUid());
-
-        usersDatabase.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot != null){
-                    usersDatabase.child("online").onDisconnect().setValue("false");
+        try {
+            usersDatabase = FirebaseDatabase.getInstance().getReference().child("Users")
+                    .child(mAuth.getCurrentUser().getUid());
+            usersDatabase.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    if (dataSnapshot != null) {
+                        usersDatabase.child("online").onDisconnect().setValue("false");
+                    }
                 }
-            }
 
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
 
-            }
-        });
+                }
+            });
+        } catch (Exception e) {
+            Log.e(TAG, "onCreate: No current User logged in", e);
+        }
     }
 }
