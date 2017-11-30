@@ -21,6 +21,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ServerValue;
 
 public class EditActivity extends AppCompatActivity {
 
@@ -168,7 +169,7 @@ public class EditActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        currentUserRef.child("online").setValue("false");
+        currentUserRef.child("online").setValue(ServerValue.TIMESTAMP);
     }
 
 }

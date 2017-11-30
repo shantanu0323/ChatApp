@@ -39,7 +39,7 @@
             android:textSize="13sp" />
     </LinearLayout>
 
-    <LinearLayout
+    <FrameLayout
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:layout_gravity="right">
@@ -50,5 +50,14 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:src="@mipmap/ic_online"/>
-    </LinearLayout>
+        <TextView
+            android:visibility="invisible"
+            android:id="@+id/tvLastSeen"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="last seen hh:mm pm"
+            android:textSize="9dp"
+            android:gravity="center"/>
+
+    </FrameLayout>
 </LinearLayout>

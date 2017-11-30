@@ -15,6 +15,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ServerValue;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -152,6 +153,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         Log.i(TAG, "onPause: CALLED");
-        currentUserRef.child("online").setValue("false");
+        try {
+            currentUserRef.child("online").setValue(ServerValue.TIMESTAMP);
+        } catch (Exception e) {
+            Log.e(TAG, "onPause: NO USER HAS LOGGED IN : " + e.getMessage() );
+        }
     }
 }

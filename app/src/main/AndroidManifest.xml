@@ -6,21 +6,18 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
+        android:name=".Chatofy"
         android:allowBackup="true"
         android:icon="@drawable/ic_app"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme"
-        android:name=".Chatofy">
-
-        <service
-            android:name=".FirebaseMessagingService">
+        android:theme="@style/AppTheme">
+        <service android:name=".FirebaseMessagingService">
             <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
-
 
         <activity
             android:name=".MainActivity"
@@ -62,10 +59,15 @@
             android:label="@string/title_activity_users"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
-                <action android:name="com.chat.bridge.TARGET_FRIEND RERQUEST"></action>
-                <category android:name="android.intent.category.DEFAULT"></category>
+                <action android:name="com.chat.bridge.TARGET_FRIEND RERQUEST" />
+
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ChatActivity"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 
 </manifest>

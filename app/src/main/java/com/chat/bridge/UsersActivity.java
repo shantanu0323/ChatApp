@@ -14,6 +14,7 @@ import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ServerValue;
 
 public class UsersActivity extends AppCompatActivity {
 
@@ -103,7 +104,7 @@ public class UsersActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         Log.i(TAG, "onPause: CALLED");
-        currentUserRef.child("online").setValue("false");
+        currentUserRef.child("online").setValue(ServerValue.TIMESTAMP);
     }
 
     @Override

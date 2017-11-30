@@ -1,7 +1,10 @@
 package com.chat.bridge;
 
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -22,6 +25,9 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.mikhaellopez.circularimageview.CircularImageView;
 import com.squareup.picasso.Picasso;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 
 /**
@@ -90,13 +96,13 @@ public class FriendsFragment extends Fragment {
             @Override
             protected void populateViewHolder(final FriendsViewHolder viewHolder, final Friends friends, int position) {
 
-                String listUserId = getRef(position).getKey();
+                final String listUserId = getRef(position).getKey();
                 Log.i(TAG, "populateViewHolder: listUserId : " + listUserId);
 //                Log.e(TAG, "populateViewHolder: ", );
                 usersDatabase.child(listUserId).addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-                        String userName = dataSnapshot.child("name").getValue().toString();
+                        final String userName = dataSnapshot.child("name").getValue().toString();
                         String thumbnail = dataSnapshot.child("thumbnail").getValue().toString();
                         String userOnline;
                         if (dataSnapshot.hasChild("online")) {
@@ -108,6 +114,35 @@ public class FriendsFragment extends Fragment {
                         viewHolder.setName(userName);
                         viewHolder.setThumbnail(getActivity(), thumbnail);
                         viewHolder.setDate(friends.getSinceDate());
+                        viewHolder.mView.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                CharSequence options[] = new CharSequence[]{"Open Profile", "Send Message"};
+                                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                                builder.setTitle("Select options : ");
+                                builder.setItems(options, new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        switch (which) {
+                                            case 0:
+                                                // user profile
+                                                Intent intent = new Intent(getContext(), UsersActivity.class);
+                                                intent.putExtra("userId", listUserId);
+                                                startActivity(intent);
+                                                break;
+                                            case 1:
+                                                // send to chat screen
+                                                Intent chatIntent = new Intent(getContext(), ChatActivity.class);
+                                                chatIntent.putExtra("userId", listUserId);
+                                                chatIntent.putExtra("userName", userName);
+                                                startActivity(chatIntent);
+                                                break;
+                                        }
+                                    }
+                                });
+                                builder.show();
+                            }
+                        });
                     }
 
                     @Override
@@ -124,7 +159,6 @@ public class FriendsFragment extends Fragment {
     public static class FriendsViewHolder extends RecyclerView.ViewHolder {
 
         View mView;
-        private String online;
 
         public FriendsViewHolder(View itemView) {
             super(itemView);
@@ -149,11 +183,23 @@ public class FriendsFragment extends Fragment {
 
         public void setOnline(String online) {
             ImageView ivOnline = (ImageView) mView.findViewById(R.id.userOnlineIcon);
+            TextView tvLastSeen = (TextView) mView.findViewById(R.id.tvLastSeen);
             if (online.equals("true")) {
                 ivOnline.setVisibility(View.VISIBLE);
+                tvLastSeen.setVisibility(View.INVISIBLE);
             } else {
                 ivOnline.setVisibility(View.INVISIBLE);
+                tvLastSeen.setText("last seen " + getTime(online));
+                tvLastSeen.setVisibility(View.VISIBLE);
             }
         }
+
+        public String getTime(String online) {
+            SimpleDateFormat sdf = new SimpleDateFormat("MMM d, H:mm a");
+            String localTime = sdf.format(new Date(Long.parseLong(online)));
+            Log.d("Time: ", localTime);
+            return localTime;
+        }
     }
+
 }
