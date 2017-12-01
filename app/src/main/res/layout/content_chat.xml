@@ -21,6 +21,7 @@
         app:layout_constraintStart_toStartOf="parent">
 
         <ImageButton
+            android:id="@+id/ibChatAdd"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:background="@drawable/bg_ripple"
@@ -29,8 +30,7 @@
             android:src="@drawable/ic_add" />
 
         <EditText
-            android:maxHeight="100dp"
-            android:id="@+id/editText"
+            android:id="@+id/etMessage"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_weight="1"
@@ -38,11 +38,13 @@
             android:ems="10"
             android:hint="Type your message ..."
             android:inputType="textMultiLine"
+            android:maxHeight="100dp"
             android:padding="10dp"
             android:singleLine="false"
             android:textSize="16dp" />
 
         <ImageButton
+            android:id="@+id/ibChatSend"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:background="@drawable/bg_ripple"
