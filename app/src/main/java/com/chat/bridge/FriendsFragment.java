@@ -189,17 +189,11 @@ public class FriendsFragment extends Fragment {
                 tvLastSeen.setVisibility(View.INVISIBLE);
             } else {
                 ivOnline.setVisibility(View.INVISIBLE);
-                tvLastSeen.setText("last seen " + getTime(online));
+                String time = GetLastSeen.getTimeAgo(Long.parseLong(online));
+                Log.i(TAG, "setOnline: TIME :" + time);
+                tvLastSeen.setText("last seen " + time);
                 tvLastSeen.setVisibility(View.VISIBLE);
             }
         }
-
-        public String getTime(String online) {
-            SimpleDateFormat sdf = new SimpleDateFormat("MMM d, H:mm a");
-            String localTime = sdf.format(new Date(Long.parseLong(online)));
-            Log.d("Time: ", localTime);
-            return localTime;
-        }
     }
-
 }

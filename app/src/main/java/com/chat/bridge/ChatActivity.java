@@ -72,8 +72,8 @@ public class ChatActivity extends AppCompatActivity {
                 if (online.equals("true")) {
                     tvLastSeen.setText("online");
                 } else {
-                    String time = getTime(online);
-                    tvLastSeen.setText("last seen : " + time);
+                    String time = GetLastSeen.getTimeAgo(Long.parseLong(online));
+                    tvLastSeen.setText("last seen " + time);
                 }
                 String image = dataSnapshot.child("thumbnail").getValue().toString();
                 Picasso.with(getBaseContext()).load(image).placeholder(R.drawable.default_image).into(profileImage);
@@ -111,10 +111,4 @@ public class ChatActivity extends AppCompatActivity {
         currentUserRef.child("online").setValue(ServerValue.TIMESTAMP);
     }
 
-    public String getTime(String online) {
-        SimpleDateFormat sdf = new SimpleDateFormat("MMM d, H:mm a");
-        String localTime = sdf.format(new Date(Long.parseLong(online))); // I assume your timestamp is in seconds and you're converting to milliseconds?
-        Log.d("Time: ", localTime);
-        return localTime;
-    }
 }
