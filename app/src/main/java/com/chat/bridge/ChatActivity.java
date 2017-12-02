@@ -1,10 +1,15 @@
 package com.chat.bridge;
 
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.LinearSmoothScroller;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,21 +18,21 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ServerValue;
 import com.google.firebase.database.ValueEventListener;
 import com.mikhaellopez.circularimageview.CircularImageView;
 import com.squareup.picasso.Picasso;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.TimeZone;
 
 public class ChatActivity extends AppCompatActivity {
 
@@ -36,6 +41,7 @@ public class ChatActivity extends AppCompatActivity {
     private String currentUserId;
     private DatabaseReference rootRef;
     private DatabaseReference currentUserRef;
+    private DatabaseReference messagesRef;
 
     private TextView tvDisplayName;
     private TextView tvLastSeen;
@@ -45,6 +51,25 @@ public class ChatActivity extends AppCompatActivity {
     private ImageButton ibChatAdd;
     private ImageButton ibChatSend;
     private EditText etMessage;
+    private Toolbar toolbar;
+    private ActionBar actionBar;
+    private RecyclerView messagesListLayout;
+    private SwipeRefreshLayout swipeMessageLayout;
+    private RecyclerView.SmoothScroller smoothScroller;
+
+    private final List<Messages> messagesList = new ArrayList<>();
+    private LinearLayoutManager layoutManager;
+    private MessagesAdapter messagesAdapter;
+
+    private static final int TOTAL_ITEMS_TO_LOAD = 20;
+    private int currentPageNo = 1;
+
+    // NEW SOLUTION
+    private int itemPos = 0;
+    private String lastMessageKey = "";
+    private String redundantKey = "";
+    private String firstMessageKey = "";
+    private boolean refreshEnabled = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,22 +79,11 @@ public class ChatActivity extends AppCompatActivity {
         chatUserId = getIntent().getStringExtra("userId");
         userName = getIntent().getStringExtra("userName");
 
-        ibChatAdd = (ImageButton) findViewById(R.id.ibChatAdd);
-        ibChatSend = (ImageButton) findViewById(R.id.ibChatSend);
-        etMessage = (EditText) findViewById(R.id.etMessage);
+        findViews();
 
-        ibChatSend.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                sendMessage();
-            }
-        });
-
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        ActionBar actionBar = getSupportActionBar();
+        actionBar = getSupportActionBar();
         actionBar.setDisplayHomeAsUpEnabled(true);
-//        actionBar.setTitle(userName);
         actionBar.setDisplayShowCustomEnabled(true);
 
         LayoutInflater inflater = (LayoutInflater) this.getSystemService(LAYOUT_INFLATER_SERVICE);
@@ -78,15 +92,15 @@ public class ChatActivity extends AppCompatActivity {
         tvDisplayName = (TextView) actionBarView.findViewById(R.id.tvDisplayName);
         tvLastSeen = (TextView) actionBarView.findViewById(R.id.tvLastSeen);
         profileImage = (CircularImageView) actionBarView.findViewById(R.id.profileImage);
-
         tvDisplayName.setText(userName);
+
         mAuth = FirebaseAuth.getInstance();
         currentUserId = mAuth.getCurrentUser().getUid();
         currentUserRef = FirebaseDatabase.getInstance().getReference().child("Users")
                 .child(mAuth.getCurrentUser().getUid());
-
         rootRef = FirebaseDatabase.getInstance().getReference();
 
+        // LAST SEEN AND ONLINE FEATURE
         rootRef.child("Users").child(chatUserId).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -108,6 +122,7 @@ public class ChatActivity extends AppCompatActivity {
         });
         actionBar.setCustomView(actionBarView);
 
+        // CREATING THE CONVERSATION IF NOT PRESENT
         rootRef.child("Chat").child(currentUserId).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -136,7 +151,135 @@ public class ChatActivity extends AppCompatActivity {
 
             }
         });
+
+        ibChatSend.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendMessage();
+            }
+        });
+
+        // RETRIEVING THE DATA
+        loadMessages();
+
+        // ADDING THE SWIPE REFRESH FEATURE
+        swipeMessageLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+
+                currentPageNo++;
+                itemPos = 0;
+                loadMoreMessages();
+                if (!refreshEnabled) {
+                    swipeMessageLayout.setEnabled(false);
+                }
+            }
+        });
+
     }
+
+    private void loadMoreMessages() {
+        DatabaseReference messageRef = rootRef.child("Messages").child(currentUserId).child(chatUserId);
+        Query messageQuery = messageRef.orderByKey().endAt(lastMessageKey).limitToLast(TOTAL_ITEMS_TO_LOAD);
+
+        messageQuery.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                Messages message = dataSnapshot.getValue(Messages.class);
+                if (!dataSnapshot.getKey().equals(redundantKey)) {
+                    messagesList.add(itemPos++, message);
+                }
+                if (itemPos == 1) {
+                    redundantKey = lastMessageKey;
+                    lastMessageKey = dataSnapshot.getKey();
+                }
+                messagesAdapter.notifyDataSetChanged();
+                swipeMessageLayout.setRefreshing(false);
+//                layoutManager.scrollToPosition(itemPos);
+                smoothScroller.setTargetPosition(TOTAL_ITEMS_TO_LOAD - 2);
+                layoutManager.startSmoothScroll(smoothScroller);
+                if (!dataSnapshot.getKey().equals(firstMessageKey)) {
+                    refreshEnabled = false;
+                }
+
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
+    }
+
+    private void loadMessages() {
+        DatabaseReference messageRef = rootRef.child("Messages").child(currentUserId).child(chatUserId);
+        Query messageQuery = messageRef.limitToLast(currentPageNo * TOTAL_ITEMS_TO_LOAD);
+        Query firstMessageQuery = messageRef.orderByKey().limitToFirst(1);
+
+        firstMessageQuery.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                firstMessageKey = dataSnapshot.getKey().toString();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
+        messageQuery.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                Messages message = dataSnapshot.getValue(Messages.class);
+                itemPos++;
+                if (itemPos == 1) {
+                    lastMessageKey = dataSnapshot.getKey();
+                }
+                messagesList.add(message);
+                messagesAdapter.notifyDataSetChanged();
+                messagesListLayout.scrollToPosition(messagesList.size() - 1);
+                swipeMessageLayout.setRefreshing(false);
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
 
     private void sendMessage() {
         String message = etMessage.getText().toString().trim();
@@ -154,6 +297,7 @@ public class ChatActivity extends AppCompatActivity {
             messageMap.put("seen", "false");
             messageMap.put("time", ServerValue.TIMESTAMP);
             messageMap.put("type", "text");
+            messageMap.put("from", currentUserId);
 
             Map messageUserMap = new HashMap();
             messageUserMap.put(currentUserRef + "/" + pushId, messageMap);
@@ -168,6 +312,34 @@ public class ChatActivity extends AppCompatActivity {
                 }
             });
         }
+    }
+
+    private void findViews() {
+        ibChatAdd = (ImageButton) findViewById(R.id.ibChatAdd);
+        ibChatSend = (ImageButton) findViewById(R.id.ibChatSend);
+        etMessage = (EditText) findViewById(R.id.etMessage);
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        messagesListLayout = (RecyclerView) findViewById(R.id.messagesList);
+        layoutManager = new LinearLayoutManager(this);
+        messagesAdapter = new MessagesAdapter(messagesList, getApplicationContext());
+        messagesListLayout.setHasFixedSize(true);
+        messagesListLayout.setLayoutManager(layoutManager);
+        messagesListLayout.setAdapter(messagesAdapter);
+        swipeMessageLayout = (SwipeRefreshLayout) findViewById(R.id.swipeMessageLayout);
+        smoothScroller = new LinearSmoothScroller(getApplicationContext()) {
+            private static final float MILLISECONDS_PER_INCH = 70f;
+
+            @Override
+            protected int getVerticalSnapPreference() {
+                return LinearSmoothScroller.SNAP_TO_START;
+            }
+
+            @Override
+            protected float calculateSpeedPerPixel
+                    (DisplayMetrics displayMetrics) {
+                return MILLISECONDS_PER_INCH / displayMetrics.densityDpi;
+            }
+        };
     }
 
     @Override
