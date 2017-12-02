@@ -179,13 +179,20 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void loadMoreMessages() {
-        DatabaseReference messageRef = rootRef.child("Messages").child(currentUserId).child(chatUserId);
+        final DatabaseReference messageRef = rootRef.child("Messages").child(currentUserId).child(chatUserId);
+        final DatabaseReference senderMessageRef = rootRef.child("Messages").child(chatUserId).child(currentUserId);
         Query messageQuery = messageRef.orderByKey().endAt(lastMessageKey).limitToLast(TOTAL_ITEMS_TO_LOAD);
+        final Map seenMap = new HashMap();
 
         messageQuery.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                 Messages message = dataSnapshot.getValue(Messages.class);
+                if (message != null && message.getFrom().equals(chatUserId)) {
+                    message.setSeen("true");
+                    messageRef.child(dataSnapshot.getKey()).child("seen").setValue("true");
+                    senderMessageRef.child(dataSnapshot.getKey()).child("seen").setValue("true");
+                }
                 if (!dataSnapshot.getKey().equals(redundantKey)) {
                     messagesList.add(itemPos++, message);
                 }
@@ -195,13 +202,11 @@ public class ChatActivity extends AppCompatActivity {
                 }
                 messagesAdapter.notifyDataSetChanged();
                 swipeMessageLayout.setRefreshing(false);
-//                layoutManager.scrollToPosition(itemPos);
                 smoothScroller.setTargetPosition(TOTAL_ITEMS_TO_LOAD - 2);
                 layoutManager.startSmoothScroll(smoothScroller);
                 if (!dataSnapshot.getKey().equals(firstMessageKey)) {
                     refreshEnabled = false;
                 }
-
             }
 
             @Override
@@ -224,18 +229,18 @@ public class ChatActivity extends AppCompatActivity {
 
             }
         });
-
     }
 
     private void loadMessages() {
-        DatabaseReference messageRef = rootRef.child("Messages").child(currentUserId).child(chatUserId);
-        Query messageQuery = messageRef.limitToLast(currentPageNo * TOTAL_ITEMS_TO_LOAD);
+        final DatabaseReference messageRef = rootRef.child("Messages").child(currentUserId).child(chatUserId);
+        final DatabaseReference senderMessageRef = rootRef.child("Messages").child(chatUserId).child(currentUserId);
+        Query messageQuery = messageRef.limitToLast(TOTAL_ITEMS_TO_LOAD);
         Query firstMessageQuery = messageRef.orderByKey().limitToFirst(1);
 
         firstMessageQuery.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                firstMessageKey = dataSnapshot.getKey().toString();
+                firstMessageKey = dataSnapshot.getKey();
             }
 
             @Override
@@ -251,6 +256,11 @@ public class ChatActivity extends AppCompatActivity {
                 itemPos++;
                 if (itemPos == 1) {
                     lastMessageKey = dataSnapshot.getKey();
+                }
+                if (message != null && message.getFrom().equals(chatUserId)) {
+                    message.setSeen("true");
+                    messageRef.child(dataSnapshot.getKey()).child("seen").setValue("true");
+                    senderMessageRef.child(dataSnapshot.getKey()).child("seen").setValue("true");
                 }
                 messagesList.add(message);
                 messagesAdapter.notifyDataSetChanged();
@@ -366,4 +376,11 @@ public class ChatActivity extends AppCompatActivity {
         currentUserRef.child("online").setValue(ServerValue.TIMESTAMP);
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Log.i(TAG, "onStop: ACTIVITY FINISHED");
+        chatUserId = null;
+        finish();
+    }
 }

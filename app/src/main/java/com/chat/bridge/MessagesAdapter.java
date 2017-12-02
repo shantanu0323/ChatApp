@@ -1,12 +1,14 @@
 package com.chat.bridge;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -20,6 +22,8 @@ import com.squareup.picasso.Callback;
 import com.squareup.picasso.NetworkPolicy;
 import com.squareup.picasso.Picasso;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -40,19 +44,25 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
     @Override
     public MessageViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.message_item_layout, parent, false);
+                .inflate(R.layout.message_sender_item_layout, parent, false);
         return new MessageViewHolder(view);
     }
 
     public class MessageViewHolder extends RecyclerView.ViewHolder {
-        public TextView messsageBody;
+        public TextView messageBody;
         public CircularImageView senderProfileImage;
+        public LinearLayout messageBodyContainer;
+        public ImageView ivSeen;
+        public TextView tvTimestamp;
 
         public MessageViewHolder(View itemView) {
             super(itemView);
 
-            messsageBody = (TextView) itemView.findViewById(R.id.messageBody);
+            messageBodyContainer = (LinearLayout) itemView.findViewById(R.id.messageBodyContainer);
+            messageBody = (TextView) itemView.findViewById(R.id.messageBody);
             senderProfileImage = (CircularImageView) itemView.findViewById(R.id.senderProfileImage);
+            ivSeen = (ImageView) itemView.findViewById(R.id.ivSeen);
+            tvTimestamp = (TextView) itemView.findViewById(R.id.tvTimestamp);
         }
     }
 
@@ -61,6 +71,20 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
         mAuth = FirebaseAuth.getInstance();
         final String currentUserId = mAuth.getCurrentUser().getUid();
         Messages msg = messagesList.get(position);
+
+        boolean seen = Boolean.parseBoolean(msg.getSeen());
+
+
+        if (seen) {
+            holder.ivSeen.setImageResource(R.mipmap.ic_seen);
+        } else {
+            holder.ivSeen.setImageResource(R.mipmap.ic_not_seen);
+        }
+
+        SimpleDateFormat sdf = new SimpleDateFormat("h:mm a");
+        String localTime = sdf.format(new Date(msg.getTime()));
+        holder.tvTimestamp.setText(localTime);
+
         final String fromUserId = msg.getFrom();
         final CircularImageView ivThumbnail = holder.senderProfileImage;
         final String[] thumbnail = new String[1];
@@ -79,7 +103,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
                     public void onError() {
                         Log.e(TAG, "onError: FAILED TO LOAD IMAGE");
                         Picasso.with(context).load(thumbnail[0]).placeholder(R.drawable.default_image).into(ivThumbnail);
-                        }
+                    }
                 });
             }
 
@@ -88,15 +112,24 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
 
             }
         });
-        if (fromUserId.equals(currentUserId)) {
-            holder.messsageBody.setBackgroundColor(Color.WHITE);
-            holder.messsageBody.setTextColor(Color.BLACK);
 
+        if (fromUserId.equals(currentUserId)) {
+            holder.messageBodyContainer.setBackgroundResource(R.drawable.bg_receiver_messsage_text);
+            holder.senderProfileImage.setVisibility(View.GONE);
+            RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+            params.addRule(RelativeLayout.ALIGN_PARENT_END);
+            params.setMargins(200, 20, 20, 20);
+            holder.messageBodyContainer.setLayoutParams(params);
         } else {
-            holder.messsageBody.setBackgroundResource(R.drawable.bg_messsage_text);
-            holder.messsageBody.setTextColor(Color.WHITE);
+            holder.messageBodyContainer.setBackgroundResource(R.drawable.bg_sender_messsage_text);
+            holder.senderProfileImage.setVisibility(View.VISIBLE);
+            RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+            params.addRule(RelativeLayout.END_OF, R.id.senderProfileImage);
+            params.addRule(RelativeLayout.CENTER_VERTICAL);
+            params.setMargins(20, 0, 200, 0);
+            holder.messageBodyContainer.setLayoutParams(params);
         }
-        holder.messsageBody.setText(msg.getMessage());
+        holder.messageBody.setText(msg.getMessage());
     }
 
     @Override
