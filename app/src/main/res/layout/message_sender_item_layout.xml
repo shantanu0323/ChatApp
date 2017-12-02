@@ -37,7 +37,7 @@
             android:layout_gravity="center_vertical"
             android:layout_weight="1"
             android:gravity="center_vertical"
-            android:text="Message this is a big one might take more space out of teh bluea snd need to occuy stuff"
+            android:text="XEADSFTRD23"
             android:textColor="#000" />
 
         <TextView

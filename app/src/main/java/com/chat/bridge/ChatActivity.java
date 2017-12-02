@@ -41,7 +41,6 @@ public class ChatActivity extends AppCompatActivity {
     private String currentUserId;
     private DatabaseReference rootRef;
     private DatabaseReference currentUserRef;
-    private DatabaseReference messagesRef;
 
     private TextView tvDisplayName;
     private TextView tvLastSeen;
@@ -98,7 +97,9 @@ public class ChatActivity extends AppCompatActivity {
         currentUserId = mAuth.getCurrentUser().getUid();
         currentUserRef = FirebaseDatabase.getInstance().getReference().child("Users")
                 .child(mAuth.getCurrentUser().getUid());
+        currentUserRef.keepSynced(true);
         rootRef = FirebaseDatabase.getInstance().getReference();
+        rootRef.keepSynced(true);
 
         // LAST SEEN AND ONLINE FEATURE
         rootRef.child("Users").child(chatUserId).addValueEventListener(new ValueEventListener() {
@@ -180,7 +181,9 @@ public class ChatActivity extends AppCompatActivity {
 
     private void loadMoreMessages() {
         final DatabaseReference messageRef = rootRef.child("Messages").child(currentUserId).child(chatUserId);
+        messageRef.keepSynced(true);
         final DatabaseReference senderMessageRef = rootRef.child("Messages").child(chatUserId).child(currentUserId);
+        senderMessageRef.keepSynced(true);
         Query messageQuery = messageRef.orderByKey().endAt(lastMessageKey).limitToLast(TOTAL_ITEMS_TO_LOAD);
         final Map seenMap = new HashMap();
 
@@ -188,10 +191,12 @@ public class ChatActivity extends AppCompatActivity {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                 Messages message = dataSnapshot.getValue(Messages.class);
-                if (message != null && message.getFrom().equals(chatUserId)) {
-                    message.setSeen("true");
-                    messageRef.child(dataSnapshot.getKey()).child("seen").setValue("true");
-                    senderMessageRef.child(dataSnapshot.getKey()).child("seen").setValue("true");
+                if (message != null && message.getFrom() != null) {
+                    if (message.getFrom().equals(chatUserId)){
+                        message.setSeen("true");
+                        messageRef.child(dataSnapshot.getKey()).child("seen").setValue("true");
+                        senderMessageRef.child(dataSnapshot.getKey()).child("seen").setValue("true");
+                    }
                 }
                 if (!dataSnapshot.getKey().equals(redundantKey)) {
                     messagesList.add(itemPos++, message);
@@ -211,7 +216,22 @@ public class ChatActivity extends AppCompatActivity {
 
             @Override
             public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-
+                Log.i(TAG, "onChildChanged: TRIGGERED");
+                Messages newMessage = dataSnapshot.getValue(Messages.class);
+                if (newMessage != null && newMessage.getSeen().equals("true")) {
+                    Log.i(TAG, "onChildChanged: CONDITION SATISFIED");
+                    messagesList.clear();
+                    loadMessages();
+//                    Messages oldMessage = newMessage;
+//                    newMessage.setSeen("false");
+//                    int index = messagesList.indexOf(newMessage);
+//                    if (index != -1) {
+//                        messagesList.set(index, newMessage);
+////                    messagesAdapter.notifyItemChanged(index);
+//                    } else {
+//                        Log.i(TAG, "onChildChanged: INDEX = -1 : " + s);
+//                    }
+                }
             }
 
             @Override
@@ -233,7 +253,9 @@ public class ChatActivity extends AppCompatActivity {
 
     private void loadMessages() {
         final DatabaseReference messageRef = rootRef.child("Messages").child(currentUserId).child(chatUserId);
+        messageRef.keepSynced(true);
         final DatabaseReference senderMessageRef = rootRef.child("Messages").child(chatUserId).child(currentUserId);
+        senderMessageRef.keepSynced(true);
         Query messageQuery = messageRef.limitToLast(TOTAL_ITEMS_TO_LOAD);
         Query firstMessageQuery = messageRef.orderByKey().limitToFirst(1);
 
@@ -270,7 +292,22 @@ public class ChatActivity extends AppCompatActivity {
 
             @Override
             public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-
+                Log.i(TAG, "onChildChanged: TRIGGERED");
+                Messages newMessage = dataSnapshot.getValue(Messages.class);
+                if (newMessage != null && newMessage.getSeen().equals("true")) {
+                    Log.i(TAG, "onChildChanged: CONDITION SATISFIED");
+                    messagesList.clear();
+                    loadMessages();
+//                    Messages oldMessage = newMessage;
+//                    newMessage.setSeen("false");
+//                    int index = messagesList.indexOf(oldMessage);
+//                    if (index != -1) {
+//                        messagesList.set(index, newMessage);
+////                    messagesAdapter.notifyItemChanged(index);
+//                    } else {
+//                        Log.i(TAG, "onChildChanged: INDEX = -1 : " + s);
+//                    }
+                }
             }
 
             @Override
@@ -298,6 +335,7 @@ public class ChatActivity extends AppCompatActivity {
 
             DatabaseReference userMessageRef = rootRef.child("Messages")
                     .child(currentUserId).child(chatUserId).push();
+            userMessageRef.keepSynced(true);
             String pushId = userMessageRef.getKey();
             String currentUserRef = "Messages/" + currentUserId + "/" + chatUserId;
             String chatUserRef = "Messages/" + chatUserId + "/" + currentUserId;

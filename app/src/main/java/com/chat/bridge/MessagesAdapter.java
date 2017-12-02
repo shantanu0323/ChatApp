@@ -86,50 +86,61 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.Messag
         holder.tvTimestamp.setText(localTime);
 
         final String fromUserId = msg.getFrom();
-        final CircularImageView ivThumbnail = holder.senderProfileImage;
-        final String[] thumbnail = new String[1];
-        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference().child("Users");
-        userRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                thumbnail[0] = dataSnapshot.child(fromUserId).child("thumbnail").getValue().toString();
-                Picasso.with(context).load(thumbnail[0]).networkPolicy(NetworkPolicy.OFFLINE).placeholder(R.drawable.default_image).into(ivThumbnail, new Callback() {
-                    @Override
-                    public void onSuccess() {
+        if (fromUserId != null) {
+            final CircularImageView ivThumbnail = holder.senderProfileImage;
+            final String[] thumbnail = new String[1];
+            DatabaseReference userRef = FirebaseDatabase.getInstance().getReference().child("Users");
+            userRef.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    thumbnail[0] = dataSnapshot.child(fromUserId).child("thumbnail").getValue().toString();
+                    Picasso.with(context).load(thumbnail[0]).networkPolicy(NetworkPolicy.OFFLINE).placeholder(R.drawable.default_image).into(ivThumbnail, new Callback() {
+                        @Override
+                        public void onSuccess() {
 
-                    }
+                        }
 
-                    @Override
-                    public void onError() {
-                        Log.e(TAG, "onError: FAILED TO LOAD IMAGE");
-                        Picasso.with(context).load(thumbnail[0]).placeholder(R.drawable.default_image).into(ivThumbnail);
-                    }
-                });
+                        @Override
+                        public void onError() {
+                            Log.e(TAG, "onError: FAILED TO LOAD IMAGE");
+                            Picasso.with(context).load(thumbnail[0]).placeholder(R.drawable.default_image).into(ivThumbnail);
+                        }
+                    });
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+
+                }
+            });
+
+
+            if (fromUserId.equals(currentUserId)) {
+                holder.ivSeen.setVisibility(View.VISIBLE);
+                holder.messageBodyContainer.setBackgroundResource(R.drawable.bg_receiver_messsage_text);
+                holder.senderProfileImage.setVisibility(View.GONE);
+                RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+                params.addRule(RelativeLayout.ALIGN_PARENT_END);
+                params.setMargins(200, 20, 20, 20);
+                holder.messageBodyContainer.setLayoutParams(params);
+            } else {
+                holder.ivSeen.setVisibility(View.GONE);
+                holder.messageBodyContainer.setBackgroundResource(R.drawable.bg_sender_messsage_text);
+                holder.senderProfileImage.setVisibility(View.VISIBLE);
+                RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+                params.addRule(RelativeLayout.END_OF, R.id.senderProfileImage);
+                params.addRule(RelativeLayout.CENTER_VERTICAL);
+                params.setMargins(20, 0, 200, 0);
+                holder.messageBodyContainer.setLayoutParams(params);
             }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
-
-        if (fromUserId.equals(currentUserId)) {
-            holder.messageBodyContainer.setBackgroundResource(R.drawable.bg_receiver_messsage_text);
-            holder.senderProfileImage.setVisibility(View.GONE);
-            RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
-            params.addRule(RelativeLayout.ALIGN_PARENT_END);
-            params.setMargins(200, 20, 20, 20);
-            holder.messageBodyContainer.setLayoutParams(params);
-        } else {
-            holder.messageBodyContainer.setBackgroundResource(R.drawable.bg_sender_messsage_text);
-            holder.senderProfileImage.setVisibility(View.VISIBLE);
-            RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
-            params.addRule(RelativeLayout.END_OF, R.id.senderProfileImage);
-            params.addRule(RelativeLayout.CENTER_VERTICAL);
-            params.setMargins(20, 0, 200, 0);
-            holder.messageBodyContainer.setLayoutParams(params);
+            holder.messageBody.setText(msg.getMessage());
         }
-        holder.messageBody.setText(msg.getMessage());
+        if (holder.messageBody.getText().toString().equals("XEADSFTRD23")) {
+            holder.messageBodyContainer.setVisibility(View.GONE);
+            holder.senderProfileImage.setVisibility(View.GONE);
+        } else {
+            holder.messageBodyContainer.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
